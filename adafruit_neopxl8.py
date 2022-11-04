@@ -8,11 +8,12 @@
 
 """
 `adafruit_neopxl8` - Neopixel strip driver using RP2040's PIO
-====================================================
+=============================================================
 
 * Author(s): Damien P. George, Scott Shawcroft, Carter Nelson, Roy Hooper, Jeff Epler
 """
 
+import struct
 import adafruit_pioasm
 import bitops
 import adafruit_pixelbuf
@@ -20,15 +21,29 @@ import rp2pio
 
 _PROGRAM = """
 .program piopixl8
-.side_set 2
-; NeoPixels are 800kHz bit streams.  Zeros are 1/3 duty cycle and ones are 2/3 duty cycle.
-; 1 loop = 6 cycles, so the PIO peripheral needs to run at 1.2MHz.
-; x must be pre-loaded with zero so we can set all-ones (with mov pins, !x)
-; or all-zeros (with mov pins, x)
-    pull ifempty ; don't start outputting HIGH unless data is available
-    mov pins, ~ x [1]; always-high part
-    out pins, 8 [1] ; variable part
-    mov pins, x ; always-low part (2nd cycle is the 'pull ifempty' after wrap)
+top:
+    mov pins, null      ; always-low part (last cycle is the 'pull ifempty' after wrap)
+    pull block          ; wait for fresh data
+    out y, 32           ; get count of NeoPixel bits
+
+; NeoPixels are 800khz bit streams. We are choosing zeros as <312ns hi, 936 lo>
+; and ones as <700 ns hi, 546 ns lo> and a clock of 16*800kHz, so the always-high
+; time is 4 cycles, the variable time is 5 cycles, and the always-low time is 7 cycles
+bitloop:
+    pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
+    mov pins, ~ null [3] ; always-high part
+    out pins, 8 [4]      ; variable part
+    mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
+
+    jmp y--, bitloop     ; always-low part
+
+; A minimum delay is required so that the next pixel starts refreshing the front of the strands
+    pull block
+    out y, 32
+
+wait_reset:
+    jmp y--, wait_reset
+    jmp top
 """
 
 _ASSEMBLED = adafruit_pioasm.assemble(_PROGRAM)
@@ -70,7 +85,10 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
     .. py:method:: NeoPxl8.show()
 
         Shows the new colors on the pixels themselves if they haven't already
-        been autowritten.
+        been autowritten. Note that with NeoPxl8 the show operation takes place
+        in the background; when this routine returns, the new pixel data has just
+        started to be written but your Python code can continue operating in the
+        foreground, updating pixel values or performing other computations.
 
     .. py:method:: NeoPxl8.fill(color)
 
@@ -106,18 +124,25 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
             n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write
         )
 
-        self._transposed = bytearray(bpp * n * 8 // num_strands)
+        data_len = bpp * n * 8 // num_strands
+        padding_count = -data_len % 4
+
+        self._data = bytearray(8 + data_len + padding_count)
+        self._data32 = memoryview(self._data).cast("L")
+        self._transposed = memoryview(self._data)[4 : 4 + data_len]
+        self._data[:4] = struct.pack("<L", data_len - 1)
+        self._data[-4:] = struct.pack("<L", 3840 * 2)
+
         self._num_strands = num_strands
 
         self._sm = rp2pio.StateMachine(
             _ASSEMBLED,
-            frequency=800_000 * 6,
+            frequency=800_000 * 16,
             first_out_pin=data0,
             out_pin_count=8,
             first_set_pin=data0,
-            auto_pull=True,
-            out_shift_right=False,
-            pull_threshold=8,
+            auto_pull=False,
+            out_shift_right=True,
         )
 
     def deinit(self):
@@ -150,5 +175,7 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
         return self._num_strands
 
     def _transmit(self, buffer):
+        while self._sm.pending:
+            pass
         bitops.bit_transpose(buffer, self._transposed, self._num_strands)
-        self._sm.write(self._transposed)
+        self._sm.background_write(self._data32)
