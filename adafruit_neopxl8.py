@@ -15,11 +15,10 @@
 
 import adafruit_pioasm
 import bitops
-import microcontroller
 import _pixelbuf
 import rp2pio
 
-_program = """
+_PROGRAM = """
 .program piopixl8
 .side_set 2
 ; NeoPixels are 800kHz bit streams.  Zeros are 1/3 duty cycle and ones are 2/3 duty cycle.
@@ -32,7 +31,7 @@ _program = """
     mov pins, x ; always-low part (2nd cycle is the 'pull ifempty' after wrap)
 """
 
-_assembled = adafruit_pioasm.assemble(_program)
+_ASSEMBLED = adafruit_pioasm.assemble(_PROGRAM)
 
 # Pixel color order constants
 RGB = "RGB"
@@ -43,6 +42,7 @@ RGBW = "RGBW"
 """Red Green Blue White"""
 GRBW = "GRBW"
 """Green Red Blue White"""
+
 
 class NeoPxl8(_pixelbuf.PixelBuf):
     """
@@ -83,8 +83,15 @@ class NeoPxl8(_pixelbuf.PixelBuf):
     """
 
     def __init__(
-        self, data0, n, *, num_strands=8, bpp=3, brightness=1.0,
-        auto_write=True, pixel_order=None
+        self,
+        data0,
+        n,
+        *,
+        num_strands=8,
+        bpp=3,
+        brightness=1.0,
+        auto_write=True,
+        pixel_order=None,
     ):
         if n % num_strands:
             raise ValueError("Length must be a multiple of num_strands")
@@ -99,11 +106,11 @@ class NeoPxl8(_pixelbuf.PixelBuf):
             n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write
         )
 
-        self._transposed = bytearray(bpp*n*8//num_strands)
+        self._transposed = bytearray(bpp * n * 8 // num_strands)
         self._num_strands = num_strands
 
         self._sm = rp2pio.StateMachine(
-            _assembled,
+            _ASSEMBLED,
             frequency=800_000 * 6,
             first_out_pin=data0,
             out_pin_count=8,
@@ -112,7 +119,6 @@ class NeoPxl8(_pixelbuf.PixelBuf):
             out_shift_right=False,
             pull_threshold=8,
         )
-
 
     def deinit(self):
         """Blank out the neopixels and release the state machine."""
