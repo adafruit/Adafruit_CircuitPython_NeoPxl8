@@ -24,14 +24,12 @@ Table of Contents
 .. toctree::
     :caption: Tutorials
 
-.. todo:: Add any Learn guide links here. If there are none, then simply delete this todo and leave
-    the toctree above for use later.
+    Adafruit NeoPixel Überguide <https://learn.adafruit.com/adafruit-neopixel-uberguide>
 
 .. toctree::
     :caption: Related Products
 
-.. todo:: Add any product links here. If there are none, then simply delete this todo and leave
-    the toctree above for use later.
+    All NeoPixels in the adafruit shop <https://www.adafruit.com/category/168>
 
 .. toctree::
     :caption: Other Links

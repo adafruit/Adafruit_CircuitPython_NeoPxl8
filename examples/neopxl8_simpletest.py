@@ -15,8 +15,8 @@ num_pixels = num_strands * strand_length
 
 # Make the object to control the pixels
 pixels = NeoPxl8(
-    board.GP0,
-    num_strands * strand_length,
+    first_led_pin,
+    num_pixels,
     num_strands=num_strands,
     auto_write=False,
     brightness=1.00,

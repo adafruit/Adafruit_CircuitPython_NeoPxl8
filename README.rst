@@ -29,46 +29,13 @@ Dependencies
 This driver depends on:
 
 * `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
+* `pioasm <https://github.com/adafruit/Adafruit_CircuitPython_pioasm>`_
 
 Please ensure all dependencies are available on the CircuitPython filesystem.
 This is easily achieved by downloading
 `the Adafruit library and driver bundle <https://circuitpython.org/libraries>`_
 or individual libraries can be installed using
 `circup <https://github.com/adafruit/circup>`_.
-
-.. todo:: Describe the Adafruit product this library works with. For PCBs, you can also add the
-image from the assets folder in the PCB's GitHub repo.
-
-`Purchase one from the Adafruit shop <http://www.adafruit.com/products/>`_
-Installing from PyPI
-=====================
-.. note:: This library is not available on PyPI yet. Install documentation is included
-   as a standard element. Stay tuned for PyPI availability!
-
-.. todo:: Remove the above note if PyPI version is/will be available at time of release.
-
-On supported GNU/Linux systems like the Raspberry Pi, you can install the driver locally `from
-PyPI <https://pypi.org/project/adafruit-circuitpython-neopxl8/>`_.
-To install for current user:
-
-.. code-block:: shell
-
-    pip3 install adafruit-circuitpython-neopxl8
-
-To install system-wide (this may be required in some cases):
-
-.. code-block:: shell
-
-    sudo pip3 install adafruit-circuitpython-neopxl8
-
-To install in a virtual environment in your current project:
-
-.. code-block:: shell
-
-    mkdir project-name && cd project-name
-    python3 -m venv .venv
-    source .env/bin/activate
-    pip3 install adafruit-circuitpython-neopxl8
 
 Installing to a Connected CircuitPython Device with Circup
 ==========================================================
@@ -96,8 +63,33 @@ Or the following command to update an existing version:
 Usage Example
 =============
 
-.. todo:: Add a quick, simple example. It and other examples should live in the
-examples folder and be included in docs/examples.rst.
+See the `Examples page <examples.html>`_ for a full example.  This example shows how to set up 8 30-pixel LED strands on an Adafruit Feather Scorpio RP2040 and set them all to dim red:
+
+.. code-block:: python
+
+    import time
+    import board
+    from adafruit_neopxl8 import NeoPxl8
+
+    # Customize for your strands here
+    num_strands = 8
+    strand_length = 30
+    first_led_pin = board.NEOPIXEL0
+
+    num_pixels = num_strands * strand_length
+
+    # Make the object to control the pixels
+    pixels = NeoPxl8(
+        first_led_pin,
+        num_pixels,
+        num_strands=num_strands,
+    )
+
+    pixels.fill(0x01_00_00)
+
+    while True:
+        time.sleep(1)
+
 
 Documentation
 =============

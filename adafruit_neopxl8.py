@@ -15,7 +15,7 @@
 
 import adafruit_pioasm
 import bitops
-import _pixelbuf
+import adafruit_pixelbuf
 import rp2pio
 
 _PROGRAM = """
@@ -44,7 +44,7 @@ GRBW = "GRBW"
 """Green Red Blue White"""
 
 
-class NeoPxl8(_pixelbuf.PixelBuf):
+class NeoPxl8(adafruit_pixelbuf.PixelBuf):
     """
     A sequence of neopixels.
 

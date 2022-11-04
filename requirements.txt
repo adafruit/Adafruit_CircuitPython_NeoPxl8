@@ -5,3 +5,4 @@
 
 Adafruit-Blinka
 Adafruit-CircuitPython-pioasm
+Adafruit-CircuitPython-PixelBuf
