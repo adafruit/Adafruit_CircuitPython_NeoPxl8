@@ -8,7 +8,7 @@
 
 """
 `adafruit_neopxl8` - Neopixel strip driver using RP2040's PIO
-====================================================
+=============================================================
 
 * Author(s): Damien P. George, Scott Shawcroft, Carter Nelson, Roy Hooper, Jeff Epler
 """
