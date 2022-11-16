@@ -74,6 +74,33 @@ wait_reset:
     jmp top
 """
 
+_PROGRAM1 = """
+.program piopixl8
+top:
+    mov pins, null      ; always-low part (last cycle is the 'pull ifempty' after wrap)
+    pull block          ; wait for fresh data
+    out y, 32           ; get count of NeoPixel bits
+
+; NeoPixels are 800khz bit streams. We are choosing zeros as <312ns hi, 936 lo>
+; and ones as <700 ns hi, 546 ns lo> and a clock of 16*800kHz, so the always-high
+; time is 4 cycles, the variable time is 5 cycles, and the always-low time is 7 cycles
+bitloop:
+    pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
+    mov pins, ~ null [3] ; always-high part
+    out pins, 1 [4]      ; variable part
+    mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
+
+    jmp y--, bitloop     ; always-low part
+
+; A minimum delay is required so that the next pixel starts refreshing the front of the strands
+    pull block
+    out y, 32
+
+wait_reset:
+    jmp y--, wait_reset
+    jmp top
+"""
+
 # Pixel color order constants
 RGB = "RGB"
 """Red Green Blue"""
@@ -150,19 +177,31 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
             n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write
         )
 
-        data_len = bpp * n * 8 // num_strands
+        if num_strands == 1:
+            data_len = bpp * n
+            pack = ">L"
+            osr = False
+            n = (8 * data_len) - 1
+        else:
+            data_len = bpp * n * 8 // num_strands
+            pack = "<L"
+            osr = True
+            n = data_len - 1
         padding_count = -data_len % 4
 
+        self._num_strands = num_strands
         self._data = bytearray(8 + data_len + padding_count)
         self._data32 = memoryview(self._data).cast("L")
-        self._transposed = memoryview(self._data)[4 : 4 + data_len]
-        self._data[:4] = struct.pack("<L", data_len - 1)
-        self._data[-4:] = struct.pack("<L", 3840 * 2)
+        self._pixels = memoryview(self._data)[4 : 4 + data_len]
+        self._data[:4] = struct.pack(pack, n)
+        self._data[-4:] = struct.pack(pack, 3840 * 2)
 
         self._num_strands = num_strands
 
         if num_strands == 8:
             assembled = adafruit_pioasm.assemble(_PROGRAM8)
+        elif num_strands == 1:
+            assembled = adafruit_pioasm.assemble(_PROGRAM1)
         else:
             program = _PROGRAMN.format(num_strands, 8 - num_strands)
             assembled = adafruit_pioasm.assemble(program)
@@ -174,7 +213,7 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
             out_pin_count=num_strands,
             first_set_pin=data0,
             auto_pull=False,
-            out_shift_right=True,
+            out_shift_right=osr,
         )
 
     def deinit(self):
@@ -209,5 +248,9 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
     def _transmit(self, buffer):
         while self._sm.pending:
             pass
-        bitops.bit_transpose(buffer, self._transposed, self._num_strands)
-        self._sm.background_write(self._data32)
+        if self.num_strands == 1:
+            self._pixels[:] = buffer
+            self._sm.background_write(self._data32, swap=True)
+        else:
+            bitops.bit_transpose(buffer, self._pixels, self._num_strands)
+            self._sm.background_write(self._data32)
