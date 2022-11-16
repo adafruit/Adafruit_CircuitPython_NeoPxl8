@@ -32,7 +32,7 @@ top:
 bitloop:
     pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
     mov pins, ~ null [3] ; always-high part
-    out pins, 8 [4]      ; variable part
+    {}                   ; variable part
     mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
 
     jmp y--, bitloop     ; always-low part
@@ -46,7 +46,6 @@ wait_reset:
     jmp top
 """
 
-_ASSEMBLED = adafruit_pioasm.assemble(_PROGRAM)
 
 # Pixel color order constants
 RGB = "RGB"
@@ -110,7 +109,7 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
         brightness=1.0,
         auto_write=True,
         pixel_order=None,
-    ):
+    ):  # pylint: disable=too-many-locals
         if n % num_strands:
             raise ValueError("Length must be a multiple of num_strands")
         if not pixel_order:
@@ -124,25 +123,48 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
             n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write
         )
 
-        data_len = bpp * n * 8 // num_strands
+        if num_strands == 1:
+            data_len = bpp * n
+            pack = ">L"
+            osr = False
+            loop_count = 8 * data_len
+        else:
+            data_len = bpp * n * 8 // num_strands
+            pack = "<L"
+            osr = True
+            loop_count = data_len
         padding_count = -data_len % 4
 
+        self._num_strands = num_strands
         self._data = bytearray(8 + data_len + padding_count)
         self._data32 = memoryview(self._data).cast("L")
-        self._transposed = memoryview(self._data)[4 : 4 + data_len]
-        self._data[:4] = struct.pack("<L", data_len - 1)
-        self._data[-4:] = struct.pack("<L", 3840 * 2)
+        self._pixels = memoryview(self._data)[4 : 4 + data_len]
+        self._data[:4] = struct.pack(pack, loop_count - 1)
+        self._data[-4:] = struct.pack(pack, 3840)
 
         self._num_strands = num_strands
 
+        if num_strands == 8:
+            variable_part = "out pins, 8 [4]      ; variable part"
+        elif num_strands == 1:
+            variable_part = "out pins, 1 [4]      ; variable part"
+        else:
+            variable_part = f"""
+                out pins, {num_strands} [3]       ; variable part
+                out x, {8-num_strands}            ; variable part
+            """
+
+        program = _PROGRAM.format(variable_part)
+        assembled = adafruit_pioasm.assemble(program)
+
         self._sm = rp2pio.StateMachine(
-            _ASSEMBLED,
+            assembled,
             frequency=800_000 * 16,
             first_out_pin=data0,
-            out_pin_count=8,
+            out_pin_count=num_strands,
             first_set_pin=data0,
             auto_pull=False,
-            out_shift_right=True,
+            out_shift_right=osr,
         )
 
     def deinit(self):
@@ -177,5 +199,9 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
     def _transmit(self, buffer):
         while self._sm.pending:
             pass
-        bitops.bit_transpose(buffer, self._transposed, self._num_strands)
-        self._sm.background_write(self._data32)
+        if self.num_strands == 1:
+            self._pixels[:] = buffer
+            self._sm.background_write(self._data32, swap=True)
+        else:
+            bitops.bit_transpose(buffer, self._pixels, self._num_strands)
+            self._sm.background_write(self._data32)
