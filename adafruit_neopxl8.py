@@ -19,7 +19,7 @@ import bitops
 import adafruit_pixelbuf
 import rp2pio
 
-_PROGRAM8 = """
+_PROGRAM = """
 .program piopixl8
 top:
     mov pins, null      ; always-low part (last cycle is the 'pull ifempty' after wrap)
@@ -32,7 +32,7 @@ top:
 bitloop:
     pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
     mov pins, ~ null [3] ; always-high part
-    out pins, 8 [4]      ; variable part
+    {}                   ; variable part
     mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
 
     jmp y--, bitloop     ; always-low part
@@ -46,60 +46,6 @@ wait_reset:
     jmp top
 """
 
-_PROGRAMN = """
-.program piopixl8
-top:
-    mov pins, null      ; always-low part (last cycle is the 'pull ifempty' after wrap)
-    pull block          ; wait for fresh data
-    out y, 32           ; get count of NeoPixel bits
-
-; NeoPixels are 800khz bit streams. We are choosing zeros as <312ns hi, 936 lo>
-; and ones as <700 ns hi, 546 ns lo> and a clock of 16*800kHz, so the always-high
-; time is 4 cycles, the variable time is 5 cycles, and the always-low time is 7 cycles
-bitloop:
-    pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
-    mov pins, ~ null [3] ; always-high part
-    out pins, {} [3]     ; variable part
-    out x, {}            ; variable part
-    mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
-
-    jmp y--, bitloop     ; always-low part
-
-; A minimum delay is required so that the next pixel starts refreshing the front of the strands
-    pull block
-    out y, 32
-
-wait_reset:
-    jmp y--, wait_reset
-    jmp top
-"""
-
-_PROGRAM1 = """
-.program piopixl8
-top:
-    mov pins, null      ; always-low part (last cycle is the 'pull ifempty' after wrap)
-    pull block          ; wait for fresh data
-    out y, 32           ; get count of NeoPixel bits
-
-; NeoPixels are 800khz bit streams. We are choosing zeros as <312ns hi, 936 lo>
-; and ones as <700 ns hi, 546 ns lo> and a clock of 16*800kHz, so the always-high
-; time is 4 cycles, the variable time is 5 cycles, and the always-low time is 7 cycles
-bitloop:
-    pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
-    mov pins, ~ null [3] ; always-high part
-    out pins, 1 [4]      ; variable part
-    mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
-
-    jmp y--, bitloop     ; always-low part
-
-; A minimum delay is required so that the next pixel starts refreshing the front of the strands
-    pull block
-    out y, 32
-
-wait_reset:
-    jmp y--, wait_reset
-    jmp top
-"""
 
 # Pixel color order constants
 RGB = "RGB"
@@ -199,12 +145,17 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
         self._num_strands = num_strands
 
         if num_strands == 8:
-            assembled = adafruit_pioasm.assemble(_PROGRAM8)
+            variable_part = "out pins, 8 [4]      ; variable part"
         elif num_strands == 1:
-            assembled = adafruit_pioasm.assemble(_PROGRAM1)
+            variable_part = "out pins, 1 [4]      ; variable part"
         else:
-            program = _PROGRAMN.format(num_strands, 8 - num_strands)
-            assembled = adafruit_pioasm.assemble(program)
+            variable_part = f"""
+                out pins, {num_strands} [3]       ; variable part
+                out x, {8-num_strands}            ; variable part
+            """
+
+        program = _PROGRAM.format(variable_part)
+        assembled = adafruit_pioasm.assemble(program)
 
         self._sm = rp2pio.StateMachine(
             assembled,
