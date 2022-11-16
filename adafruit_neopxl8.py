@@ -109,7 +109,7 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
         brightness=1.0,
         auto_write=True,
         pixel_order=None,
-    ):
+    ):  # pylint: disable=too-many-locals
         if n % num_strands:
             raise ValueError("Length must be a multiple of num_strands")
         if not pixel_order:
@@ -127,20 +127,20 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
             data_len = bpp * n
             pack = ">L"
             osr = False
-            n = (8 * data_len) - 1
+            loop_count = 8 * data_len
         else:
             data_len = bpp * n * 8 // num_strands
             pack = "<L"
             osr = True
-            n = data_len - 1
+            loop_count = data_len
         padding_count = -data_len % 4
 
         self._num_strands = num_strands
         self._data = bytearray(8 + data_len + padding_count)
         self._data32 = memoryview(self._data).cast("L")
         self._pixels = memoryview(self._data)[4 : 4 + data_len]
-        self._data[:4] = struct.pack(pack, n)
-        self._data[-4:] = struct.pack(pack, 3840 * 2)
+        self._data[:4] = struct.pack(pack, loop_count - 1)
+        self._data[-4:] = struct.pack(pack, 3840)
 
         self._num_strands = num_strands
 
