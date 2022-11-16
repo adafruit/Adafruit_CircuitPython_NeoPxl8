@@ -165,10 +165,8 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
             assembled = adafruit_pioasm.assemble(_PROGRAM8)
         else:
             program = _PROGRAMN.format(num_strands, 8 - num_strands)
-            print(program)
             assembled = adafruit_pioasm.assemble(program)
 
-        print("num strands is", num_strands)
         self._sm = rp2pio.StateMachine(
             assembled,
             frequency=800_000 * 16,
