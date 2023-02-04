@@ -19,6 +19,10 @@ import bitops
 import adafruit_pixelbuf
 import rp2pio
 
+__version__ = "0.0.0+auto.0"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_NeoPxl8.git"
+
+
 _PROGRAM = """
 .program piopixl8
 top:
