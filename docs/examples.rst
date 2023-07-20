@@ -2,7 +2,6 @@ Examples
 ===========
 
 .. contents:: 
-    
 
 Simple Test
 -----------
@@ -28,7 +27,7 @@ Adafruit LED Animation Functions
 
 There are a variety of animations you can use (Pulse, Chase, Rainbow, RainbowChase, etc.).
 
-Below are code snippets that you can test in the ``neopxl8_animations.py`` file. **NOTE** I 
+Below are code snippets that you can test in the ``neopxl8_animations.py`` file. **NOTE** I
 am only including code snippets of the required import statement and the function call.
 
 The Blink() function
@@ -38,7 +37,7 @@ Blink a color on and off.
 
 .. code-block:: python
     :emphasize-lines: 2, 5
-    
+
     # import the function
     from adafruit_led_animation.animation.blink import Blink
 
@@ -59,7 +58,7 @@ Chase pixels in one direction in a single color, like a theater marquee sign.
 
 .. code-block:: python
     :emphasize-lines: 2, 5
-    
+
     # import the function
     from adafruit_led_animation.animation.chase import Chase
 
