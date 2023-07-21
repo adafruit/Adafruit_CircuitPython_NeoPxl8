@@ -1,7 +1,7 @@
 Examples
 ===========
 
-.. contents:: 
+.. contents::
 
 Simple Test
 -----------
