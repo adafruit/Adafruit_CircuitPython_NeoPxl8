@@ -30,16 +30,17 @@ top:
     pull block          ; wait for fresh data
     out y, 32           ; get count of NeoPixel bits
 
-; NeoPixels are 800khz bit streams. We are choosing zeros as <312ns hi, 936 lo>
-; and ones as <700 ns hi, 546 ns lo> and a clock of 16*800kHz, so the always-high
+; NeoPixels are 800khz bit streams and we run at 16*800kHz.
+; We are choosing zeros as [4,12] ~= <312ns hi, 938 lo>
+; and ones as [9,7] ~= <700ns hi, 546ns lo> and a clock of 16*800kHz, so the always-high
 ; time is 4 cycles, the variable time is 5 cycles, and the always-low time is 7 cycles
 bitloop:
-    pull ifempty [1]     ; don't start outputting HIGH unless data is available (always-low part)
-    mov pins, ~ null [3] ; always-high part
+    pull ifempty [4]     ; don't start outputting HIGH unless data is available (always-low part) ; low 7
+    mov pins, ~ null [3] ; always-high part ; high 4
     {}                   ; variable part
-    mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)
+    mov pins, null       ; always-low part (last cycle is the 'pull ifempty' after wrap)  ; low: 1
 
-    jmp y--, bitloop     ; always-low part
+    jmp y--, bitloop     ; always-low part                                                ; low: 2
 
 ; A minimum delay is required so that the next pixel starts refreshing the front of the strands
     pull block
