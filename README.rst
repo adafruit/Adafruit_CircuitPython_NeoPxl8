@@ -52,7 +52,7 @@ following command to install:
 
 .. code-block:: shell
 
-    circup install neopxl8
+    circup install adafruit_neopxl8
 
 Or the following command to update an existing version:
 
