@@ -69,7 +69,7 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
 
     :param ~microcontroller.Pin data0: The first of 8 data registers, in GPIO order
     :param int n: The total number of neopixels.  Must be a multiple of the number of strands.
-    :param int num_strands: The number of neopixels in each strand.
+    :param int num_strands: The number of strands of neopixels.
     :param int bpp: Bytes per pixel. 3 for RGB and 4 for RGBW pixels.
     :param float brightness: Brightness of the pixels between 0.0 and 1.0 where 1.0 is full
       brightness
