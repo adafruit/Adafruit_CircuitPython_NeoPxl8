@@ -2,7 +2,7 @@ Introduction
 ============
 
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-neopxl8/badge/?version=latest
+.. image:: https://readthedocs.org/projects/neopxl8/badge/?version=latest
     :target: https://docs.circuitpython.org/projects/neopxl8/en/latest/
     :alt: Documentation Status
 
