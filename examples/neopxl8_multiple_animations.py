@@ -2,19 +2,20 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-import board
 import adafruit_ticks
-from adafruit_led_animation.animation.sparklepulse import SparklePulse
-from adafruit_led_animation.animation.comet import Comet
+import board
 from adafruit_led_animation.animation.chase import Chase
+from adafruit_led_animation.animation.comet import Comet
 from adafruit_led_animation.animation.pulse import Pulse
-from adafruit_led_animation.animation.sparkle import Sparkle
 from adafruit_led_animation.animation.rainbowchase import RainbowChase
-from adafruit_led_animation.animation.rainbowsparkle import RainbowSparkle
 from adafruit_led_animation.animation.rainbowcomet import RainbowComet
+from adafruit_led_animation.animation.rainbowsparkle import RainbowSparkle
+from adafruit_led_animation.animation.sparkle import Sparkle
+from adafruit_led_animation.animation.sparklepulse import SparklePulse
+from adafruit_led_animation.color import AMBER, JADE, PURPLE, WHITE
 from adafruit_led_animation.group import AnimationGroup
 from adafruit_led_animation.helper import PixelMap
-from adafruit_led_animation.color import PURPLE, WHITE, AMBER, JADE
+
 from adafruit_neopxl8 import NeoPxl8
 
 # Customize for your strands here
