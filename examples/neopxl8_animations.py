@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: Unlicense
 
+import adafruit_ticks
 import board
 import rainbowio
-import adafruit_ticks
 from adafruit_led_animation.animation.comet import Comet
 from adafruit_led_animation.group import AnimationGroup
 from adafruit_led_animation.helper import PixelMap
+
 from adafruit_neopxl8 import NeoPxl8
 
 # Customize for your strands here
@@ -46,7 +47,7 @@ animations = [
 
 # Advance the animations by varying amounts so that they become staggered
 for i, animation in enumerate(animations):
-    animation._tail_start = 30 * 5 * i // 8  # pylint: disable=protected-access
+    animation._tail_start = 30 * 5 * i // 8
 
 # Group them so we can run them all at once
 animations = AnimationGroup(*animations)

@@ -14,9 +14,10 @@
 """
 
 import struct
+
 import adafruit_pioasm
-import bitops
 import adafruit_pixelbuf
+import bitops
 import rp2pio
 
 __version__ = "0.0.0+auto.0"
@@ -114,19 +115,16 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
         brightness=1.0,
         auto_write=True,
         pixel_order=None,
-    ):  # pylint: disable=too-many-locals
+    ):
         if n % num_strands:
             raise ValueError("Length must be a multiple of num_strands")
         if not pixel_order:
             pixel_order = GRB if bpp == 3 else GRBW
-        else:
-            if isinstance(pixel_order, tuple):
-                order_list = [RGBW[order] for order in pixel_order]
-                pixel_order = "".join(order_list)
+        elif isinstance(pixel_order, tuple):
+            order_list = [RGBW[order] for order in pixel_order]
+            pixel_order = "".join(order_list)
 
-        super().__init__(
-            n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write
-        )
+        super().__init__(n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write)
 
         if num_strands == 1:
             data_len = bpp * n

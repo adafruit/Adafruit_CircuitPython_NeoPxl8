@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Unlicense
 
 import time
+
 import board
+
 from adafruit_neopxl8 import NeoPxl8
 
 # Customize for your strands here
