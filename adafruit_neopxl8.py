@@ -154,7 +154,7 @@ class NeoPxl8(adafruit_pixelbuf.PixelBuf):
         else:
             variable_part = f"""
                 out pins, {num_strands} [3]       ; variable part
-                out x, {8-num_strands}            ; variable part
+                out x, {8 - num_strands}            ; variable part
             """
 
         program = _PROGRAM.format(variable_part)

@@ -61,6 +61,6 @@ while True:
     t1 = adafruit_ticks.ticks_ms()
     dt = adafruit_ticks.ticks_diff(t1, t0)
     if dt > 1000:
-        print(f"{frame_count * 1000/dt:.1f}fps")
+        print(f"{frame_count * 1000 / dt:.1f}fps")
         t0 = t1
         frame_count = 0
